@@ -1,8 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import subprocess
 import re
 import json
+
+adapter = None
+enclosure=None
+slot=None
 
 def yesno(state):
   states = {
@@ -32,10 +36,9 @@ def tobytes(inp):
   return inp
 
 def main():
-  info = subprocess.check_output(['/opt/MegaRAID/MegaCli/MegaCli64', '-AdpAllInfo', '-aAll', '-nolog']).decode('utf-8').splitlines()
-  pdlist = subprocess.check_output(['/opt/MegaRAID/MegaCli/MegaCli64', '-PdList', '-aAll', '-nolog']).decode('utf-8').splitlines()
+  info = subprocess.check_output(['/usr/local/sbin/megacli', '-AdpAllInfo', '-aAll', '-nolog']).decode('utf-8').splitlines()
+  pdlist = subprocess.check_output(['/usr/local/sbin/megacli', '-PdList', '-aAll', '-nolog']).decode('utf-8').splitlines()
   out = {}
-  adapter = None
 
   metrics= [
     'out["megacli_controller"]={ "help": "Controler information", "type": "gauge" , "metrics": []}',
@@ -53,7 +56,7 @@ def main():
     { 
       'regex': re.compile('^Adapter\s+#\d+'),
       'action': [
-        'adapter=line.split("#")[1].strip()'
+        'global adapter; adapter=line.split("#")[1].strip()'
       ]
     },
     { 
@@ -154,8 +157,7 @@ def main():
     },
   ]
   
-  enclosure=None
-  slot=None
+
   position=None
   device_id=None
   wwn=None
@@ -163,15 +165,15 @@ def main():
   pat_pd = [
     {
       'regex': re.compile('^Adapter\s+#\d+'),
-      'action': ['adapter=line.split("#")[1].strip()']
+      'action': ['global adapter; adapter=line.split("#")[1].strip()']
     },
     {
       'regex': re.compile('^Enclosure\s+Device\s+ID:'),
-      'action': ['enclosure=line.split(":")[1].strip()']
+      'action': ['global enclosure; enclosure=line.split(":")[1].strip()']
     },
     {
       'regex': re.compile('^Slot\s+Number\s*:'),
-      'action': ['slot=line.split(":")[1].strip()']
+      'action': ['global slot; slot=line.split(":")[1].strip()']
     },
     {
       'regex': re.compile('^Drive\'s\s+position:'),
@@ -270,7 +272,7 @@ def main():
       'regex': re.compile('^Drive\s+Temperature\s*:'),
       'action': [
         'out["megacli_pd_temperature"]["metrics"].append({ "labels": { "adapter": adapter, "enclosure": enclosure, "slot": slot, "type": "celsius" }, "val": line.split(":")[1].split("C")[0].strip() })',
-        'out["megacli_pd_temperature"]["metrics"].append({ "labels": { "adapter": adapter, "enclosure": enclosure, "slot": slot, "type": "barbarians" }, "val": line.split("(")[1].split(" ")[0].strip() })'
+        # 'out["megacli_pd_temperature"]["metrics"].append({ "labels": { "adapter": adapter, "enclosure": enclosure, "slot": slot, "type": "barbarians" }, "val": line.split("(")[1].split(" ")[0].strip() })'
       ]
     },
     {
@@ -299,7 +301,7 @@ def main():
         continue
 
 #  print json.dumps(out, indent=2, sort_keys=True)
-  for k,v in out.iteritems():
+  for k,v in out.items():
     print("# HELP " + k + " " + v['help'])
     print("# TYPE " + k + " " + v['type'])
     for m in v['metrics']:
