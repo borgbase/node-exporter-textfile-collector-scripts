@@ -208,7 +208,7 @@ def collect_metrics():
 def print_all_metrics(metrics):
     for metric, label_name, label_value, status, metric_value in metrics:
         if label_name is not None:
-            print(f'{args.vendor_binary}_{metric}{{{label_name}="{label_value}" state="{metric_value}"}} {status}')
+            print(f'{args.vendor_binary}_{metric}{{{label_name}="{label_value}",state="{metric_value}"}} {status}')
         else:
             print(f'{args.vendor_binary}_{metric}{{state="{metric_value}"}} {status}')
 
