@@ -72,7 +72,8 @@ BINARIES = {
                 'args': ['GETCONFIG', '1', 'AD'],
                 'test': 'arcconf/ad.txt',
                 'values': [
-                    ['Controller Status', 'controller_status_error', 'Optimal'],
+                    # arcconf name, prom metric name, expected value
+                    ['Controller Status', 'controller_has_error', 'Optimal'],
                     ['Logical devices/Failed/Degraded', 'logical_device_degraded', '1/0/0'],
                     ['Defunct disk drive count', 'has_defunct_drives', '0']
                 ]
@@ -95,7 +96,7 @@ BINARIES = {
                     'label': 'device'
                 },
                 'values': [
-                    ['State', 'drive_online', 'Online'],
+                    ['State', 'drive_offline', 'Online'],
                     ['S.M.A.R.T. warnings', 'drive_has_smart_warnings', '0'],
                     # # ['Unused Size', '0 MB'],
                     ['Aborted Commands', 'drive_has_aborted_commands', '0'],
@@ -122,7 +123,7 @@ BINARIES = {
 
 # Parse cli args
 parser = argparse.ArgumentParser(description='Find failed values in RAID management tools.')
-parser.add_argument('-b', '--vendor-binary', default=None,
+parser.add_argument('-b', '--vendor-binary', default='arcconf',
                     help='which vendor binary to use. E.g. megacli, arcconf')
 parser.add_argument('-c', '--config', default='/etc/raid-monitor.conf',
                     help='path to config file in INI format. Default: /etc/raid-monitor.conf')
@@ -191,7 +192,13 @@ def collect_metrics():
             for attribute_name, metric_name, expected_value in check['values']:
                 res = re.match(f"^\s*{attribute_name}\s*:\s*(\w+.*)$", line)
                 if res is not None:
-                    metrics.append([metric_name, separator_label, separator_value, int(res.group(1) != expected_value)])
+                    metrics.append([
+                        metric_name,
+                        separator_label,
+                        separator_value,
+                        int(res.group(1) != expected_value),
+                        res.group(1)
+                    ])
 
 
     logger.info('Finished checks for vendor %s', binary_name)
@@ -199,11 +206,11 @@ def collect_metrics():
 
 
 def print_all_metrics(metrics):
-    for metric, label_name, label_value, status in metrics:
+    for metric, label_name, label_value, status, metric_value in metrics:
         if label_name is not None:
-            print(f"{args.vendor_binary}_{metric}{{{label_name}={label_value}}} {status}")
+            print(f'{args.vendor_binary}_{metric}{{{label_name}="{label_value}" state="{metric_value}"}} {status}')
         else:
-            print(f"{args.vendor_binary}_{metric} {status}")
+            print(f'{args.vendor_binary}_{metric}{{state="{metric_value}"}} {status}')
 
 def main():
     metrics = collect_metrics()
