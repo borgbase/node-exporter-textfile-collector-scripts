@@ -269,7 +269,7 @@ def main():
       ]
     },
     {
-      'regex': re.compile('^Drive\s+Temperature\s*:'),
+      'regex': re.compile('^Drive\s+Temperature\s*:\d{1,2}C'),
       'action': [
         'out["megacli_pd_temperature"]["metrics"].append({ "labels": { "adapter": adapter, "enclosure": enclosure, "slot": slot, "type": "celsius" }, "val": line.split(":")[1].split("C")[0].strip() })',
         # 'out["megacli_pd_temperature"]["metrics"].append({ "labels": { "adapter": adapter, "enclosure": enclosure, "slot": slot, "type": "barbarians" }, "val": line.split("(")[1].split(" ")[0].strip() })'
