@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Description: Expose metrics from yum updates.
 #
 # Author: Slawomir Gonet <slawek@otwiera.cz>
-# 
+#
 # Based on apt.sh by Ben Kochie <superq@gmail.com>
 
 set -u -o pipefail
@@ -38,12 +38,11 @@ else
   echo 'yum_upgrades_pending{origin=""} 0'
 fi
 
-# if yum-utils is not installed the skip rendering this metric 
-if [[ -x '/bin/needs-restarting' ]] ; then
+# If yum-utils/dnf-utils is not installed then we skip rendering this metric
+if [[ -x /bin/needs-restarting ]] ; then
   echo '# HELP node_reboot_required Node reboot is required for software updates.'
   echo '# TYPE node_reboot_required gauge'
-  if /bin/needs-restarting -r  > /dev/null 2>&1
-  then
+  if /bin/needs-restarting -r  > /dev/null 2>&1 ; then
     echo 'node_reboot_required 0'
   else
     echo 'node_reboot_required 1'
