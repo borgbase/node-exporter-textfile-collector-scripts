@@ -17,7 +17,8 @@ def yesno(state):
 def state2int(state):
   #put remaining states here
   states = {
-    "Online, Spun Up": 255
+    "Online, Spun Up": 255,
+    "Hotspare, Spun Up": 256
     }
 
   return states.get(state, 0)
